@@ -552,12 +552,17 @@ elif len(set(nurses)) != len(nurses):
 # 3. NURSE AVAILABILITY & OFF DAYS
 # ============================================================
 
+# ============================================================
+# 3. NURSE AVAILABILITY & OFF DAYS
+# ============================================================
+
 st.header("3. Nurse Availability & Off Days")
+
 st.markdown(
     """
     <div class="availability-note">
-    <b>No shifts are selected by default.</b><br>
-    Select the shifts when the nurse is available.
+    <b>All shifts are selected by default.</b><br>
+    Deselect any shift when the nurse is not available.
     Select <b>Off day</b> when that specific day is the nurse's
     planned/requested day off.
     </div>
@@ -586,6 +591,27 @@ if len(nurses) == number_of_nurses and len(set(nurses)) == len(nurses):
                 night_key = f"night_v4_{nurse_index}_{day_index}"
                 off_key = f"off_v4_{nurse_index}_{day_index}"
 
+                # ------------------------------------------------
+                # Initialize default state
+                # All three shifts are available by default.
+                # ------------------------------------------------
+                if morning_key not in st.session_state:
+                    st.session_state[morning_key] = True
+
+                if evening_key not in st.session_state:
+                    st.session_state[evening_key] = True
+
+                if night_key not in st.session_state:
+                    st.session_state[night_key] = True
+
+                if off_key not in st.session_state:
+                    st.session_state[off_key] = False
+
+                # ------------------------------------------------
+                # Off-day callback
+                # Selecting Off day automatically clears all
+                # three shift selections.
+                # ------------------------------------------------
                 def handle_off_day(
                     morning_key=morning_key,
                     evening_key=evening_key,
@@ -596,7 +622,18 @@ if len(nurses) == number_of_nurses and len(set(nurses)) == len(nurses):
                         st.session_state[morning_key] = False
                         st.session_state[evening_key] = False
                         st.session_state[night_key] = False
+                    else:
+                        # When Off day is deselected, restore
+                        # all shifts as available by default.
+                        st.session_state[morning_key] = True
+                        st.session_state[evening_key] = True
+                        st.session_state[night_key] = True
 
+                # ------------------------------------------------
+                # Shift callback
+                # Selecting any shift automatically removes
+                # Off day status.
+                # ------------------------------------------------
                 def handle_shift(
                     morning_key=morning_key,
                     evening_key=evening_key,
@@ -611,12 +648,16 @@ if len(nurses) == number_of_nurses and len(set(nurses)) == len(nurses):
                         st.session_state[off_key] = False
 
                 off_day_current = st.session_state.get(
-                    off_key, False
+                    off_key,
+                    False
                 )
+
+                # ------------------------------------------------
+                # Shift checkboxes
+                # ------------------------------------------------
 
                 morning = st.checkbox(
                     "Morning",
-                    value=False,
                     key=morning_key,
                     disabled=off_day_current,
                     on_change=handle_shift
@@ -624,7 +665,6 @@ if len(nurses) == number_of_nurses and len(set(nurses)) == len(nurses):
 
                 evening = st.checkbox(
                     "Evening",
-                    value=False,
                     key=evening_key,
                     disabled=off_day_current,
                     on_change=handle_shift
@@ -632,18 +672,24 @@ if len(nurses) == number_of_nurses and len(set(nurses)) == len(nurses):
 
                 night = st.checkbox(
                     "Night",
-                    value=False,
                     key=night_key,
                     disabled=off_day_current,
                     on_change=handle_shift
                 )
 
+                # ------------------------------------------------
+                # Off-day checkbox
+                # ------------------------------------------------
+
                 off_day = st.checkbox(
                     "Off day",
-                    value=False,
                     key=off_key,
                     on_change=handle_off_day
                 )
+
+                # ------------------------------------------------
+                # Build selected shift list
+                # ------------------------------------------------
 
                 selected_shifts = []
 
@@ -669,6 +715,7 @@ if len(nurses) == number_of_nurses and len(set(nurses)) == len(nurses):
     availability_df = pd.DataFrame(availability_records)
 
 else:
+
     availability_df = pd.DataFrame()
 
 # 4 Preferences
